@@ -9,7 +9,7 @@ class RBIProcessor:
         # Fallback to absolute path for Docker compatibility
         self.raw_dir = os.getenv("DATA_DIR", "/app/data/raw_pdfs")
         self.chunk_size = 1500
-        self.chunk_overlap = 200
+        self.chunk_overlap = 500
         
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,

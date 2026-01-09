@@ -19,6 +19,35 @@ load_dotenv()
 
 st.set_page_config(page_title="RBI Compliance AI", page_icon="🏦", layout="wide")
 
+with st.sidebar:
+    st.header("⚙️ Response Settings")
+    response_mode = st.radio(
+        "Select Response Verbosity:",
+        ["Detailed", "Brief"],
+        index=0,
+        help="Detailed provides full regulatory depth; Brief focuses on critical points."
+    )
+
+# --- 2. Dynamic Prompt Selection ---
+if response_mode == "Brief":
+    instruction_text = """
+    1. Answer the question ONLY using the provided context. If the answer is not in the context, state that clearly.
+    2. Provide a concise Executive Summary of the critical points first.
+    3. Use bullet points for readability.
+    4. PRIORITIZE NUMERIC LIMITS: Explicitly include aggregate loan limits (e.g., ₹60,000), deposit caps (₹1 lakh), and validity timelines (e.g., 1 year).
+    5. SECTOR SPECIFICITY: If limits differ between bank types (e.g., UCBs vs. Commercial Banks), highlight these differences.
+    6. If a specific numeric limit/timeline is not mentioned, state: "The provided text does not specify the exact [amount/timeline]."
+    7. Always cite the Source and Date clearly for each point."""
+else:
+    instruction_text = """
+    1. Answer the question ONLY using the provided context. Do not use outside knowledge.
+    2. Provide a comprehensive and thorough answer based on the context.
+    3. Explain the regulatory rationale where available, especially for limits and timelines.
+    4. GROUNDING RULE: You must extract and highlight all numeric values, such as the ₹60,000 sanction limit or the 1-year account validity for Aadhaar OTP accounts.
+    5. SECTOR COMPARISON: Explicitly mention if the rules change for different bank categories (e.g., Payments Banks, SFBs, or UCBs).
+    6. If specific technical thresholds are missing from the text, state: "The provided text does not specify the exact [amount/timeline]."
+    7. Always cite the Source and Date clearly for each point."""
+
 @st.cache_resource
 def initialize_system():
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -40,21 +69,21 @@ def initialize_system():
         google_api_key=api_key
     )
     
-    # --- MODIFIED PROMPT TEMPLATE ---
-    # We add instructions to specifically look at the metadata we injected
-    template = """
+    # --- 3. Updated Prompt Template (Notice the double {{braces}}) ---
+    # Python fills in {instruction_text} now.
+    # LangChain will fill in {context} and {question} later because of the double {{ }}.
+    template = f"""
     You are an expert RBI Compliance Officer. Use the provided context to answer the question.
 
-    Context: {context}
+    Context: {{context}}
 
     Instruction: 
-    1. Provide a comprehensive answer based on the context.
-    2. If multiple directions are mentioned, summarize the common requirements.
-    3. Always cite the Source and Date clearly for each point.
+    {instruction_text}
 
-    Question: {question}
+    Question: {{question}}
     Helpful Answer:"""
-    
+
+    # Now LangChain will correctly find 'context' and 'question' as input variables.
     QA_PROMPT = PromptTemplate(
         template=template, input_variables=["context", "question"]
     )
@@ -67,7 +96,8 @@ def initialize_system():
         #retriever=vector_db.as_retriever(search_kwargs={"k": 5}),
         retriever = vector_db.as_retriever(
             search_type="mmr", # Ensures a diverse set of documents are retrieved
-            search_kwargs={"k": 10, "fetch_k": 20} # Looks deeper into the database
+            search_kwargs={"k": 20, "fetch_k": 50} # Looks deeper into the database 
+            # Increased from 15 to 20 & 30 t0 50 for better context coverage
         ),
         return_source_documents=True,
         chain_type_kwargs={
@@ -84,7 +114,7 @@ def initialize_system():
 
 # --- UI Layout ---
 st.title("🏦 RBI Compliance Chatbot")
-st.markdown("Query the knowledge base of **89 Master Directions** with real-time citations.")
+st.markdown("Query the knowledge base of **316 Master Directions** with real-time citations.")
 
 try:
     qa_engine = initialize_system()

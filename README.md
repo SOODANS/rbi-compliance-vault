@@ -53,6 +53,22 @@ docker run --rm `
 Phase 2: Knowledge Indexing (Vector DB)
 To process the downloaded PDFs into semantic mathematical vectors stored in ChromaDB:
 
+2. Why this matters for your app.py
+If you are currently debugging your app.py or initialize_db.py, you must use the second command.
+
+Scenario A: You change a line in initialize_db.py to fix a metadata bug. If you run the first command, the bot will still use the old, broken code.
+
+Scenario B: You run the second command. The container "reaches out" to your D: drive and runs your latest edits instantly, saving you from having to wait for a 5-minute docker build every time you fix a typo.
+
+3. Summary of Use Cases
+Use the first command when you are sure the code is perfect and you want to ensure the environment is 100% clean and "frozen" for a long run.
+
+Use the second command for everything else. It is the "Hot Reload" mode for your development.
+
+1) Run Indexer: 
+docker run --rm -v "D:\rbi-compliance-vault\data:/app/data" --env-file .env rbi-compliance-ai python -m src.engine.initialize_db
+
+2) Run Indexer: (New indexing)
 docker run --rm `
   -v "D:\rbi-compliance-vault\data:/app/data" `
   -v "D:\rbi-compliance-vault\src:/app/src" `
@@ -60,7 +76,38 @@ docker run --rm `
   rbi-compliance-ai python -m src.engine.initialize_db
 
 *******************************************************************************************************
+The primary difference between the above two commands lies in how they handle your source code (src) folder.
 
+1. Command BreakdownThe first command relies on the code already "baked" into the Docker image, while the second command bind mounts your local folder into the container.
+
+-------------------------------------------------------------------------------------------------------------------------------
+Feature			|	First Command							|	Second Command (with src mount)									|
+-------------------------------------------------------------------------------------------------------------------------------
+Code Source		|	Uses the src folder as it was when  	|	Uses the live src folder currently on your D: drive.			|
+				|	you last ran docker build.				|																	|
+				|											|																	|
+Development     | 	Best for Production or final testing.	|	Best for Development and debugging.								|
+				|											|																	|
+Changes			|	Code edits on your D: drive are 		|	Code edits on your D: drive are immediate inside the container.	|
+				|	ignored until you rebuild.				|																	|
+Portability		|	More stable; always runs exactly 		|	Less stable; can break if your local code has syntax errors.	|
+				|	what was built.							|
+*******************************************************************************************************
+Verifying Metadata Integrity:
+
+Run this command to inspect a raw database chunk and ensure link, date, and source are correctly indexed:
+
+docker run --rm `
+  -v "D:\rbi-compliance-vault\data:/app/data" `
+  --env-file .env `
+  rbi-compliance-ai python -c "import sys; __import__('pysqlite3'); sys.modules['sqlite3'] = sys.modules.pop('pysqlite3'); from langchain_community.vectorstores import Chroma; from langchain_google_genai import GoogleGenerativeAIEmbeddings; import os; db = Chroma(persist_directory='/app/data/chroma_db', embedding_function=GoogleGenerativeAIEmbeddings(model='models/text-embedding-004', google_api_key=os.getenv('GOOGLE_API_KEY'))); print(db.get(limit=1)['metadatas'])"
+
+Expected Output: [{'date': 'Nov 28, 2025', 'url': 'https://...', 'source': '...', 'title': '...'}]
+
+*******************************************************************************************************
+docker build -t rbi-compliance-ai .
+ 
+*******************************************************************************************************
 Phase 3: Launch the Chatbot (Streamlit)
 To start the web interface and begin querying regulations:
 
@@ -79,23 +126,10 @@ Access at: http://localhost:8501
 Resetting the Knowledge Base
 If you notice stale data or missing links, perform a "Clean Slate" reset to clear the database cache:
 
-# Delete the old database folder
+#Delete the old database folder to ensure no stale data remains
 Remove-Item -Path "D:\rbi-compliance-vault\data\chroma_db" -Recurse -Force
 
 # Then re-run Phase 2 (Indexing)
-
-*******************************************************************************************************
-
-Verifying Metadata Integrity:
-
-Run this command to inspect a raw database chunk and ensure link, date, and source are correctly indexed:
-
-docker run --rm `
-  -v "D:\rbi-compliance-vault\data:/app/data" `
-  --env-file .env `
-  rbi-compliance-ai python -c "import sys; __import__('pysqlite3'); sys.modules['sqlite3'] = sys.modules.pop('pysqlite3'); from langchain_community.vectorstores import Chroma; from langchain_google_genai import GoogleGenerativeAIEmbeddings; import os; db = Chroma(persist_directory='/app/data/chroma_db', embedding_function=GoogleGenerativeAIEmbeddings(model='models/text-embedding-004', google_api_key=os.getenv('GOOGLE_API_KEY'))); print(db.get(limit=1)['metadatas'])"
-
-Expected Output: [{'date': 'Nov 28, 2025', 'url': 'https://...', 'source': '...', 'title': '...'}]
 
 *******************************************************************************************************
 
