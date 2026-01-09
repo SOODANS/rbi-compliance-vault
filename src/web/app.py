@@ -117,20 +117,19 @@ if prompt := st.chat_input("Ask about KYC, FEMA, Digital Lending, etc..."):
             with st.expander("📚 View Official RBI Sources"):
                 unique_sources = set()
                 for doc in response["source_documents"]:
-                    source_name = doc.metadata.get('source', 'Unknown Direction')
-                    source_date = doc.metadata.get('date', 'Unknown Date')
-                    source_url = doc.metadata.get('link') # Matches the verified key in your DB
+                    source_name = doc.metadata.get('title', 'RBI Master Direction')
+                    source_date = doc.metadata.get('date', 'Nov 28, 2025')
+                    source_url = doc.metadata.get('url') # Matches the verified 'url' key
                     
-                    # Create a clean display string
-                    src_display = f"**{source_name}** (Published: {source_date})"
-                    
-                    if src_display not in unique_sources:
-                        st.write(f"- {src_display}")
-                        if source_url:
-                            # This creates a proper clickable link
+                    if source_url:
+                        src_display = f"**{source_name}** (Dated: {source_date})"
+                        if src_display not in unique_sources:
+                            st.write(f"- {src_display}")
+                            # This opens the official RBI PDF in a new tab
                             st.markdown(f"  [🔗 Read True Copy on RBI Website]({source_url})")
-                        unique_sources.add(src_display)
+                            unique_sources.add(src_display)
                     else:
-                        st.warning("Official link not found for this chunk.")
+                        # This helps us identify exactly which file is missing data
+                        st.warning(f"⚠️ Link data missing in database for: {source_name}")
                         
     st.session_state.messages.append({"role": "assistant", "content": answer})
