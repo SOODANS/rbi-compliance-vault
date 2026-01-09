@@ -109,21 +109,28 @@ if prompt := st.chat_input("Ask about KYC, FEMA, Digital Lending, etc..."):
             response = qa_engine({"query": prompt})
             answer = response["result"]
             
+            # Display result
             st.markdown(answer)
             
-            with st.expander("📚 View Regulatory Sources"):
+            # Display source citations in an expander
+            # --- Improved Citation Logic for app.py ---
+            with st.expander("📚 View Official RBI Sources"):
                 unique_sources = set()
                 for doc in response["source_documents"]:
-                    # Note: We use 'url' as identified in your earlier metadata check
-                    source_name = doc.metadata.get('source', 'Unknown Source')
+                    source_name = doc.metadata.get('source', 'Unknown Direction')
                     source_date = doc.metadata.get('date', 'Unknown Date')
-                    source_url = doc.metadata.get('url', '#')
+                    source_url = doc.metadata.get('link') # Matches the verified key in your DB
                     
-                    src_info = f"**{source_name}** (Published: {source_date})"
+                    # Create a clean display string
+                    src_display = f"**{source_name}** (Published: {source_date})"
                     
-                    if src_info not in unique_sources:
-                        st.write(f"- {src_info}")
-                        st.write(f"  [Read Original Document]({source_url})")
-                        unique_sources.add(src_info)
+                    if src_display not in unique_sources:
+                        st.write(f"- {src_display}")
+                        if source_url:
+                            # This creates a proper clickable link
+                            st.markdown(f"  [🔗 Read True Copy on RBI Website]({source_url})")
+                        unique_sources.add(src_display)
+                    else:
+                        st.warning("Official link not found for this chunk.")
                         
     st.session_state.messages.append({"role": "assistant", "content": answer})
