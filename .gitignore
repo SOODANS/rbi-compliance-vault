@@ -1,0 +1,19 @@
+# Data & Database (Your specific request)
+data/
+
+# Environment Variables (SENSITIVE - GOOGLE_API_KEY)
+.env
+
+# Python 
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Docker
+.dockerignore
+
+# IDEs
+.vscode/
+.idea/

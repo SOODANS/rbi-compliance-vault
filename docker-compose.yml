@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # The core RAG Engine and Web UI
+  compliance-app:
+    build: .
+    container_name: rbi_rag_engine
+    ports:
+      - "8501:8501" # Streamlit Port
+      - "8000:8000" # FastAPI Port
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    depends_on:
+      - vectordb
+
+  # Persistent Vector Database (ChromaDB)
+  vectordb:
+    image: chromadb/chroma:latest
+    container_name: rag_vector_db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_data:/chroma/chroma

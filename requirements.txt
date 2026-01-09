@@ -1,0 +1,29 @@
+# Scraping & Data Handling
+selenium
+beautifulsoup4
+webdriver-manager
+requests
+pandas
+
+# PDF Text Extraction
+pymupdf
+
+# AI Framework & Gemini Integration
+langchain
+langchain-google-genai
+langchain-community
+pypdf
+python-dotenv
+langchain-classic         # Required for legacy chains like RetrievalQA
+langchain-core            # Core abstractions like PromptTemplate
+
+# Vector Database
+chromadb
+pysqlite3-binary
+langchain-text-splitters
+
+# Web Interface & API
+streamlit
+fastapi
+uvicorn
+
