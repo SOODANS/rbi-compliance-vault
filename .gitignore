@@ -3,6 +3,7 @@ data/
 
 # Environment Variables (SENSITIVE - GOOGLE_API_KEY)
 .env
+rbi-compliance-vault.code-workspace
 
 # Python 
 __pycache__/

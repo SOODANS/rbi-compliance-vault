@@ -92,7 +92,7 @@ Changes			|	Code edits on your D: drive are 		|	Code edits on your D: drive are 
 				|	ignored until you rebuild.				|																	|
 Portability		|	More stable; always runs exactly 		|	Less stable; can break if your local code has syntax errors.	|
 				|	what was built.							|
-*******************************************************************************************************
+*********************************************************************************************************************************
 Verifying Metadata Integrity:
 
 Run this command to inspect a raw database chunk and ensure link, date, and source are correctly indexed:
@@ -105,6 +105,10 @@ docker run --rm `
 Expected Output: [{'date': 'Nov 28, 2025', 'url': 'https://...', 'source': '...', 'title': '...'}]
 
 *******************************************************************************************************
+2. Build the Docker Image
+Run this command to build the core engine:
+
+PowerShell:
 docker build -t rbi-compliance-ai .
  
 *******************************************************************************************************
